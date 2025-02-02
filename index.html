@@ -75,10 +75,69 @@
 
         <!-- Profile Page -->
         <div class="profile-page" id="profilePage">
+            // Check if the WebApp is available
+if (window.Telegram && window.Telegram.WebApp) {
+    const tg = window.Telegram.WebApp;
+
+    // Initialize the WebApp
+    tg.ready();
+
+    // Parse initData to get user information
+    const initData = tg.initDataUnsafe;
+
+    // Function to populate profile page with user data
+    function populateProfilePage() {
+        const user = initData.user;
+
+        if (user) {
+            document.getElementById('profilePicture').src = user.photo_url || 'https://via.placeholder.com/100';
+            document.getElementById('profileName').textContent = `Name: ${user.first_name} ${user.last_name || ''}`;
+            document.getElementById('profileUsername').textContent = `Username: ${user.username || 'N/A'}`;
+            document.getElementById('profilePhone').textContent = `Phone: ${user.phone_number || 'N/A'}`;
+        } else {
+            alert("User data not available.");
+        }
+
+        // Show the profile page
+        document.getElementById('profilePage').classList.add('active');
+    }
+
+    // Add click event listeners to the tabs
+    document.getElementById('liveTab').addEventListener('click', () => {
+        setActiveTab('liveTab');
+        document.getElementById('profilePage').classList.remove('active');
+    });
+
+    document.getElementById('communityTab').addEventListener('click', () => {
+        setActiveTab('communityTab');
+        document.getElementById('profilePage').classList.remove('active');
+    });
+
+    document.getElementById('searchTab').addEventListener('click', () => {
+        setActiveTab('searchTab');
+        document.getElementById('profilePage').classList.remove('active');
+    });
+
+    document.getElementById('profileTab').addEventListener('click', () => {
+        setActiveTab('profileTab');
+        populateProfilePage();
+    });
+
+    // Function to set the active tab
+    function setActiveTab(tabId) {
+        // Remove active class from all tabs
+        document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+        // Add active class to the clicked tab
+        document.getElementById(tabId).classList.add('active');
+    }
+} else {
+    console.error("Telegram WebApp API is not available.");
+}
             <img id="profilePicture" class="profile-picture" src="" alt="Profile Picture">
             <div class="profile-info" id="profileName"></div>
             <div class="profile-info" id="profileUsername"></div>
             <div class="profile-info" id="profilePhone"></div>
+            
         </div>
     </div>
 
