@@ -65,7 +65,7 @@
 </head>
 <body>
     <!-- Landing Page -->
-    <div class="container" id="landingPage">
+    <div class="container hidden" id="landingPage">
         <h1>Welcome to My Telegram Mini App!</h1>
         <button onclick="showSignUp()">Sign Up</button>
         <button onclick="showLogin()">Login</button>
@@ -114,6 +114,16 @@
         // Simulated database (in-memory storage)
         const users = [];
 
+        // Check if user is already logged in
+        window.onload = function () {
+            const loggedInUser = sessionStorage.getItem('loggedInUser');
+            if (loggedInUser) {
+                redirectToLiveTab(JSON.parse(loggedInUser));
+            } else {
+                document.getElementById('landingPage').classList.remove('hidden');
+            }
+        };
+
         // Show Sign-Up Form
         function showSignUp() {
             document.getElementById('landingPage').classList.add('hidden');
@@ -156,4 +166,67 @@
             }
 
             // Simulate verifying the code
-            if (code === "1234") { // Assume the code is "1
+            if (code === "1234") { // Assume the code is "1234"
+                const tempUser = JSON.parse(sessionStorage.getItem('tempUser'));
+
+                // Save user data
+                users.push(tempUser);
+
+                // Clear temporary data
+                sessionStorage.removeItem('tempUser');
+
+                // Hide 2FA form and redirect to Live Tab
+                document.getElementById('twoFAForm').classList.add('hidden');
+                redirectToLiveTab(tempUser);
+
+                alert("Sign up successful! Redirecting to Live Tab...");
+            } else {
+                alert("Invalid verification code.");
+            }
+        }
+
+        // Login User
+        function loginUser() {
+            const phone = document.getElementById('loginPhone').value;
+            const password = document.getElementById('loginPassword').value;
+
+            const user = users.find(u => u.phone === phone && u.password === password);
+
+            if (user) {
+                alert("Login successful! Redirecting to Live Tab...");
+                redirectToLiveTab(user);
+            } else {
+                alert("Invalid phone number or password.");
+            }
+        }
+
+        // Redirect to Live Tab
+        function redirectToLiveTab(user) {
+            // Store logged-in user data
+            sessionStorage.setItem('loggedInUser', JSON.stringify(user));
+
+            // Hide all forms and show Live Tab
+            document.getElementById('landingPage').classList.add('hidden');
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('liveTab').classList.remove('hidden');
+        }
+
+        // Show Profile Page
+        function showProfile() {
+            const loggedInUser = JSON.parse(sessionStorage.getItem('loggedInUser'));
+
+            if (!loggedInUser) {
+                alert("You must be logged in to view your profile.");
+                return;
+            }
+
+            document.getElementById('liveTab').classList.add('hidden');
+            document.getElementById('profilePage').classList.remove('hidden');
+
+            // Display user data
+            document.getElementById('profileName').textContent = `Name: ${loggedInUser.name}`;
+            document.getElementById('profilePhone').textContent = `Phone: ${loggedInUser.phone}`;
+        }
+    </script>
+</body>
+</html>
