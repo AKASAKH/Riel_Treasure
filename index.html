@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notcoin Clone - Telegram Mini App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+        .container {
+            margin-top: 50px;
+        }
+        h1 {
+            color: #333;
+        }
+        #coinCounter {
+            font-size: 24px;
+            font-weight: bold;
+            color: #0088cc;
+        }
+        #mineButton {
+            margin-top: 20px;
+            padding: 20px 40px;
+            font-size: 18px;
+            color: #fff;
+            background-color: #0088cc;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        #mineButton:hover {
+            background-color: #005f99;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Notcoin Clone</h1>
+        <p>Mine coins by tapping the button below!</p>
+        <div id="coinCounter">Coins: 0</div>
+        <button id="mineButton">Mine Coin</button>
+    </div>
+
+    <script>
+        // Check if the WebApp is available
+        if (window.Telegram && window.Telegram.WebApp) {
+            const tg = window.Telegram.WebApp;
+
+            // Initialize the WebApp
+            tg.ready();
+
+            // Coin counter logic
+            let coinCount = 0;
+
+            // Update coin counter display
+            function updateCoinCounter() {
+                document.getElementById('coinCounter').textContent = `Coins: ${coinCount}`;
+            }
+
+            // Add event listener to mine button
+            document.getElementById('mineButton').addEventListener('click', () => {
+                coinCount++;
+                updateCoinCounter();
+            });
+
+            // Example: Send coin count to bot when closing the app
+            tg.onEvent('mainButtonClicked', () => {
+                tg.sendData(JSON.stringify({ coins: coinCount }));
+                tg.close();
+            });
+
+            // Optional: Show Telegram's Main Button
+            tg.MainButton.setText("Submit Coins").show();
+        } else {
+            console.error("Telegram WebApp API is not available.");
+        }
+    </script>
+</body>
+</html>
