@@ -1,0 +1,8 @@
+@media (max-width: 600px) {
+    .tabs-container {
+        flex-direction: column;
+    }
+    .tab {
+        margin-bottom: 10px;
+    }
+}
