@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notcoin Clone - Telegram Mini App</title>
+    <title>Telegram Mini App - Main Page</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -18,33 +18,43 @@
         h1 {
             color: #333;
         }
-        #coinCounter {
-            font-size: 24px;
-            font-weight: bold;
-            color: #0088cc;
-        }
-        #mineButton {
+        .tables-container {
+            display: flex;
+            justify-content: space-around;
             margin-top: 20px;
-            padding: 20px 40px;
-            font-size: 18px;
-            color: #fff;
-            background-color: #0088cc;
-            border: none;
-            border-radius: 50%;
-            cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            background-color: #fff;
+            border-top: 2px solid #ddd;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
         }
-        #mineButton:hover {
+        .table {
+            background-color: #0088cc;
+            color: #fff;
+            padding: 15px 20px;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .table:hover {
             background-color: #005f99;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Notcoin Clone</h1>
-        <p>Mine coins by tapping the button below!</p>
-        <div id="coinCounter">Coins: 0</div>
-        <button id="mineButton">Mine Coin</button>
+        <h1>Welcome to My Telegram Mini App!</h1>
+        <p>This is the main page of your app.</p>
+    </div>
+
+    <!-- Tables Section -->
+    <div class="tables-container">
+        <div class="table" id="table1">Table 1</div>
+        <div class="table" id="table2">Table 2</div>
+        <div class="table" id="table3">Table 3</div>
     </div>
 
     <script>
@@ -55,28 +65,18 @@
             // Initialize the WebApp
             tg.ready();
 
-            // Coin counter logic
-            let coinCount = 0;
-
-            // Update coin counter display
-            function updateCoinCounter() {
-                document.getElementById('coinCounter').textContent = `Coins: ${coinCount}`;
-            }
-
-            // Add event listener to mine button
-            document.getElementById('mineButton').addEventListener('click', () => {
-                coinCount++;
-                updateCoinCounter();
+            // Add click event listeners to the tables
+            document.getElementById('table1').addEventListener('click', () => {
+                alert('Table 1 clicked!');
             });
 
-            // Example: Send coin count to bot when closing the app
-            tg.onEvent('mainButtonClicked', () => {
-                tg.sendData(JSON.stringify({ coins: coinCount }));
-                tg.close();
+            document.getElementById('table2').addEventListener('click', () => {
+                alert('Table 2 clicked!');
             });
 
-            // Optional: Show Telegram's Main Button
-            tg.MainButton.setText("Submit Coins").show();
+            document.getElementById('table3').addEventListener('click', () => {
+                alert('Table 3 clicked!');
+            });
         } else {
             console.error("Telegram WebApp API is not available.");
         }
