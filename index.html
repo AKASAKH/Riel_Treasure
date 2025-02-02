@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telegram Mini App - Main Page</title>
+    <title>Telegram Mini App - Landing Page</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -18,36 +18,37 @@
         h1 {
             color: #333;
         }
-        .tabs-container {
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            margin-top: 20px;
-            padding: 10px 0;
-            background-color: #fff;
-            border-top: 2px solid #ddd;
-            position: fixed;
-            bottom: 0;
+        .form-container {
+            margin: 20px auto;
+            padding: 20px;
+            width: 300px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        input[type="text"],
+        input[type="password"],
+        input[type="tel"] {
             width: 100%;
-            box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
         }
-        .tab {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            color: #666;
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            color: #fff;
+            background-color: #0088cc;
+            border: none;
+            border-radius: 4px;
             cursor: pointer;
-            transition: color 0.3s ease;
         }
-        .tab.active {
-            color: #0088cc;
+        button:hover {
+            background-color: #005f99;
         }
-        .tab-icon {
-            font-size: 24px;
-            margin-bottom: 5px;
-        }
-        .tab-label {
-            font-size: 12px;
+        .hidden {
+            display: none;
         }
         .profile-page {
             display: none;
@@ -56,12 +57,6 @@
         .profile-page.active {
             display: block;
         }
-        .profile-picture {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            margin-bottom: 20px;
-        }
         .profile-info {
             font-size: 16px;
             color: #333;
@@ -69,156 +64,153 @@
     </style>
 </head>
 <body>
-    <div class="container">
+    <!-- Landing Page -->
+    <div class="container" id="landingPage">
         <h1>Welcome to My Telegram Mini App!</h1>
-        <p>This is the main page of your app.</p>
-
-        <!-- Profile Page -->
-        <div class="profile-page" id="profilePage">
-            // Check if the WebApp is available
-if (window.Telegram && window.Telegram.WebApp) {
-    const tg = window.Telegram.WebApp;
-
-    // Initialize the WebApp
-    tg.ready();
-
-    // Parse initData to get user information
-    const initData = tg.initDataUnsafe;
-
-    // Function to populate profile page with user data
-    function populateProfilePage() {
-        const user = initData.user;
-
-        if (user) {
-            document.getElementById('profilePicture').src = user.photo_url || 'https://via.placeholder.com/100';
-            document.getElementById('profileName').textContent = `Name: ${user.first_name} ${user.last_name || ''}`;
-            document.getElementById('profileUsername').textContent = `Username: ${user.username || 'N/A'}`;
-            document.getElementById('profilePhone').textContent = `Phone: ${user.phone_number || 'N/A'}`;
-        } else {
-            alert("User data not available.");
-        }
-
-        // Show the profile page
-        document.getElementById('profilePage').classList.add('active');
-    }
-
-    // Add click event listeners to the tabs
-    document.getElementById('liveTab').addEventListener('click', () => {
-        setActiveTab('liveTab');
-        document.getElementById('profilePage').classList.remove('active');
-    });
-
-    document.getElementById('communityTab').addEventListener('click', () => {
-        setActiveTab('communityTab');
-        document.getElementById('profilePage').classList.remove('active');
-    });
-
-    document.getElementById('searchTab').addEventListener('click', () => {
-        setActiveTab('searchTab');
-        document.getElementById('profilePage').classList.remove('active');
-    });
-
-    document.getElementById('profileTab').addEventListener('click', () => {
-        setActiveTab('profileTab');
-        populateProfilePage();
-    });
-
-    // Function to set the active tab
-    function setActiveTab(tabId) {
-        // Remove active class from all tabs
-        document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-        // Add active class to the clicked tab
-        document.getElementById(tabId).classList.add('active');
-    }
-} else {
-    console.error("Telegram WebApp API is not available.");
-}
-            <img id="profilePicture" class="profile-picture" src="" alt="Profile Picture">
-            <div class="profile-info" id="profileName"></div>
-            <div class="profile-info" id="profileUsername"></div>
-            <div class="profile-info" id="profilePhone"></div>
-            
-        </div>
+        <button onclick="showSignUp()">Sign Up</button>
+        <button onclick="showLogin()">Login</button>
     </div>
 
-    <!-- Tabs Section -->
-    <div class="tabs-container">
-        <div class="tab active" id="liveTab">
-            <div class="tab-icon">🎥</div>
-            <div class="tab-label">Live</div>
-        </div>
-        <div class="tab" id="communityTab">
-            <div class="tab-icon">👥</div>
-            <div class="tab-label">Community</div>
-        </div>
-        <div class="tab" id="searchTab">
-            <div class="tab-icon">🔍</div>
-            <div class="tab-label">Search</div>
-        </div>
-        <div class="tab" id="profileTab">
-            <div class="tab-icon">👤</div>
-            <div class="tab-label">Profile</div>
-        </div>
+    <!-- Sign-Up Form -->
+    <div class="form-container hidden" id="signUpForm">
+        <h2>Sign Up</h2>
+        <input type="text" id="signupName" placeholder="Name" required>
+        <input type="tel" id="signupPhone" placeholder="Phone Number" required>
+        <input type="password" id="signupPassword" placeholder="Password" required>
+        <button onclick="nextTo2FA()">Next</button>
+    </div>
+
+    <!-- 2FA Verification -->
+    <div class="form-container hidden" id="twoFAForm">
+        <h2>2FA Verification</h2>
+        <p>Enter the code sent to your phone number:</p>
+        <input type="text" id="verificationCode" placeholder="Verification Code" required>
+        <button onclick="completeSignUp()">Verify</button>
+    </div>
+
+    <!-- Login Form -->
+    <div class="form-container hidden" id="loginForm">
+        <h2>Login</h2>
+        <input type="tel" id="loginPhone" placeholder="Phone Number" required>
+        <input type="password" id="loginPassword" placeholder="Password" required>
+        <button onclick="loginUser()">Login</button>
+    </div>
+
+    <!-- Live Tab -->
+    <div class="container hidden" id="liveTab">
+        <h1>Live Tab</h1>
+        <p>Welcome to the Live Tab!</p>
+        <button onclick="showProfile()">View Profile</button>
+    </div>
+
+    <!-- Profile Page -->
+    <div class="profile-page hidden" id="profilePage">
+        <h2>Profile</h2>
+        <div class="profile-info" id="profileName"></div>
+        <div class="profile-info" id="profilePhone"></div>
     </div>
 
     <script>
-        // Check if the WebApp is available
-        if (window.Telegram && window.Telegram.WebApp) {
-            const tg = window.Telegram.WebApp;
+        // Simulated database (in-memory storage)
+        const users = [];
 
-            // Initialize the WebApp
-            tg.ready();
+        // Show Sign-Up Form
+        function showSignUp() {
+            document.getElementById('landingPage').classList.add('hidden');
+            document.getElementById('signUpForm').classList.remove('hidden');
+        }
 
-            // Parse initData to get user information
-            const initData = tg.initDataUnsafe;
+        // Show Login Form
+        function showLogin() {
+            document.getElementById('landingPage').classList.add('hidden');
+            document.getElementById('loginForm').classList.remove('hidden');
+        }
 
-            // Function to populate profile page with user data
-            function populateProfilePage() {
-                const user = initData.user;
+        // Next to 2FA Verification
+        function nextTo2FA() {
+            const name = document.getElementById('signupName').value;
+            const phone = document.getElementById('signupPhone').value;
+            const password = document.getElementById('signupPassword').value;
 
-                if (user) {
-                    document.getElementById('profilePicture').src = user.photo_url || 'https://via.placeholder.com/100';
-                    document.getElementById('profileName').textContent = `Name: ${user.first_name} ${user.last_name || ''}`;
-                    document.getElementById('profileUsername').textContent = `Username: ${user.username || 'N/A'}`;
-                    document.getElementById('profilePhone').textContent = `Phone: ${user.phone_number || 'N/A'}`;
-                } else {
-                    alert("User data not available.");
-                }
-
-                // Show the profile page
-                document.getElementById('profilePage').classList.add('active');
+            if (!name || !phone || !password) {
+                alert("Please fill in all fields.");
+                return;
             }
 
-            // Add click event listeners to the tabs
-            document.getElementById('liveTab').addEventListener('click', () => {
-                setActiveTab('liveTab');
-                document.getElementById('profilePage').classList.remove('active');
-            });
+            // Store temporary data for 2FA
+            sessionStorage.setItem('tempUser', JSON.stringify({ name, phone, password }));
 
-            document.getElementById('communityTab').addEventListener('click', () => {
-                setActiveTab('communityTab');
-                document.getElementById('profilePage').classList.remove('active');
-            });
+            // Simulate sending a verification code
+            alert(`A verification code has been sent to ${phone}.`);
+            document.getElementById('signUpForm').classList.add('hidden');
+            document.getElementById('twoFAForm').classList.remove('hidden');
+        }
 
-            document.getElementById('searchTab').addEventListener('click', () => {
-                setActiveTab('searchTab');
-                document.getElementById('profilePage').classList.remove('active');
-            });
+        // Complete Sign-Up
+        function completeSignUp() {
+            const code = document.getElementById('verificationCode').value;
 
-            document.getElementById('profileTab').addEventListener('click', () => {
-                setActiveTab('profileTab');
-                populateProfilePage();
-            });
-
-            // Function to set the active tab
-            function setActiveTab(tabId) {
-                // Remove active class from all tabs
-                document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-                // Add active class to the clicked tab
-                document.getElementById(tabId).classList.add('active');
+            if (!code) {
+                alert("Please enter the verification code.");
+                return;
             }
-        } else {
-            console.error("Telegram WebApp API is not available.");
+
+            // Simulate verifying the code
+            if (code === "1234") { // Assume the code is "1234"
+                const tempUser = JSON.parse(sessionStorage.getItem('tempUser'));
+
+                // Save user data
+                users.push(tempUser);
+
+                // Clear temporary data
+                sessionStorage.removeItem('tempUser');
+
+                alert("Sign up successful! Redirecting to Live Tab...");
+                redirectToLiveTab(tempUser);
+            } else {
+                alert("Invalid verification code.");
+            }
+        }
+
+        // Login User
+        function loginUser() {
+            const phone = document.getElementById('loginPhone').value;
+            const password = document.getElementById('loginPassword').value;
+
+            const user = users.find(u => u.phone === phone && u.password === password);
+
+            if (user) {
+                alert("Login successful! Redirecting to Live Tab...");
+                redirectToLiveTab(user);
+            } else {
+                alert("Invalid phone number or password.");
+            }
+        }
+
+        // Redirect to Live Tab
+        function redirectToLiveTab(user) {
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('liveTab').classList.remove('hidden');
+
+            // Store logged-in user data
+            sessionStorage.setItem('loggedInUser', JSON.stringify(user));
+        }
+
+        // Show Profile Page
+        function showProfile() {
+            const loggedInUser = JSON.parse(sessionStorage.getItem('loggedInUser'));
+
+            if (!loggedInUser) {
+                alert("You must be logged in to view your profile.");
+                return;
+            }
+
+            document.getElementById('liveTab').classList.add('hidden');
+            document.getElementById('profilePage').classList.remove('hidden');
+
+            // Display user data
+            document.getElementById('profileName').textContent = `Name: ${loggedInUser.name}`;
+            document.getElementById('profilePhone').textContent = `Phone: ${loggedInUser.phone}`;
         }
     </script>
 </body>
