@@ -4,9 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Telegram Mini App - Landing Page</title>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -64,33 +61,9 @@
             font-size: 16px;
             color: #333;
         }
-        .error {
-            color: red;
-            font-size: 14px;
-        }
     </style>
 </head>
 <body>
-    <!-- Firebase Configuration -->
-    <script>
-        const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_AUTH_DOMAIN",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_STORAGE_BUCKET",
-            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-            appId: "YOUR_APP_ID"
-        };
-        const app = firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-
-        // Twilio API (Replace with your Twilio credentials)
-        const twilioAccountSid = "YOUR_TWILIO_SID";
-        const twilioAuthToken = "YOUR_TWILIO_AUTH_TOKEN";
-        const twilioPhoneNumber = "+1234567890"; // Your Twilio phone number
-    </script>
-
     <!-- Landing Page -->
     <div class="container hidden" id="landingPage">
         <h1>Welcome to My Telegram Mini App!</h1>
@@ -104,7 +77,6 @@
         <input type="tel" id="signupPhone" placeholder="Phone Number" required>
         <input type="password" id="signupPassword" placeholder="Password" required>
         <button onclick="nextTo2FA()">Next</button>
-        <p class="error" id="signupError"></p>
     </div>
     <!-- 2FA Verification -->
     <div class="form-container hidden" id="twoFAForm">
@@ -112,7 +84,6 @@
         <p>Enter the code sent to your phone number:</p>
         <input type="text" id="verificationCode" placeholder="Verification Code" required>
         <button onclick="completeSignUp()">Verify</button>
-        <p class="error" id="verificationError"></p>
     </div>
     <!-- Login Form -->
     <div class="form-container hidden" id="loginForm">
@@ -120,7 +91,6 @@
         <input type="tel" id="loginPhone" placeholder="Phone Number" required>
         <input type="password" id="loginPassword" placeholder="Password" required>
         <button onclick="loginUser()">Login</button>
-        <p class="error" id="loginError"></p>
     </div>
     <!-- Live Tab -->
     <div class="container hidden" id="liveTab">
@@ -135,178 +105,98 @@
         <div class="profile-info" id="profilePhone"></div>
     </div>
     <script>
-        let tempUser = null;
-
+        // Simulated database (in-memory storage)
+        const users = [];
         // Check if user is already logged in
         window.onload = function () {
-            auth.onAuthStateChanged(user => {
-                if (user) {
-                    redirectToLiveTab(user);
-                } else {
-                    document.getElementById('landingPage').classList.remove('hidden');
-                }
-            });
+            const loggedInUser = sessionStorage.getItem('loggedInUser');
+            if (loggedInUser) {
+                redirectToLiveTab(JSON.parse(loggedInUser));
+            } else {
+                document.getElementById('landingPage').classList.remove('hidden');
+            }
         };
-
         // Show Sign-Up Form
         function showSignUp() {
             document.getElementById('landingPage').classList.add('hidden');
             document.getElementById('signUpForm').classList.remove('hidden');
         }
-
         // Show Login Form
         function showLogin() {
             document.getElementById('landingPage').classList.add('hidden');
             document.getElementById('loginForm').classList.remove('hidden');
         }
-
         // Next to 2FA Verification
-        async function nextTo2FA() {
+        function nextTo2FA() {
             const name = document.getElementById('signupName').value;
             const phone = document.getElementById('signupPhone').value;
             const password = document.getElementById('signupPassword').value;
-            const signupError = document.getElementById('signupError');
-
             if (!name || !phone || !password) {
-                signupError.textContent = "Please fill in all fields.";
+                alert("Please fill in all fields.");
                 return;
             }
-
-            // Hash the password
-            const hashedPassword = await hashPassword(password);
-
             // Store temporary data for 2FA
-            tempUser = { name, phone, password: hashedPassword };
-            sessionStorage.setItem('tempUser', JSON.stringify(tempUser));
-
-            // Send verification code via Twilio
-            try {
-                const verificationCode = Math.floor(1000 + Math.random() * 9000); // Generate random 4-digit code
-                sessionStorage.setItem('verificationCode', verificationCode.toString());
-                await sendVerificationCode(phone, verificationCode);
-                alert(`A verification code has been sent to ${phone}.`);
-                document.getElementById('signUpForm').classList.add('hidden');
-                document.getElementById('twoFAForm').classList.remove('hidden');
-            } catch (error) {
-                signupError.textContent = "Failed to send verification code. Please try again.";
-            }
+            sessionStorage.setItem('tempUser', JSON.stringify({ name, phone, password }));
+            // Simulate sending a verification code
+            alert(`A verification code has been sent to ${phone}.`);
+            document.getElementById('signUpForm').classList.add('hidden');
+            document.getElementById('twoFAForm').classList.remove('hidden');
         }
-
         // Complete Sign-Up
-        async function completeSignUp() {
+        function completeSignUp() {
             const code = document.getElementById('verificationCode').value;
-            const verificationError = document.getElementById('verificationError');
-
             if (!code) {
-                verificationError.textContent = "Please enter the verification code.";
+                alert("Please enter the verification code.");
                 return;
             }
-
-            const storedCode = sessionStorage.getItem('verificationCode');
-            if (code !== storedCode) {
-                verificationError.textContent = "Invalid verification code.";
-                return;
-            }
-
-            // Save user data to Firestore
-            try {
-                const userRef = db.collection('users').doc(tempUser.phone);
-                await userRef.set({
-                    name: tempUser.name,
-                    phone: tempUser.phone,
-                    password: tempUser.password
-                });
-
+            // Simulate verifying the code
+            if (code === "1234") { // Assume the code is "1234"
+                const tempUser = JSON.parse(sessionStorage.getItem('tempUser'));
+                // Save user data
+                users.push(tempUser);
                 // Clear temporary data
                 sessionStorage.removeItem('tempUser');
-                sessionStorage.removeItem('verificationCode');
-
-                // Redirect to Live Tab
+                // Hide 2FA form and redirect to Live Tab
                 document.getElementById('twoFAForm').classList.add('hidden');
                 redirectToLiveTab(tempUser);
                 alert("Sign up successful! Redirecting to Live Tab...");
-            } catch (error) {
-                verificationError.textContent = "Failed to save user data. Please try again.";
+            } else {
+                alert("Invalid verification code.");
             }
         }
-
         // Login User
-        async function loginUser() {
+        function loginUser() {
             const phone = document.getElementById('loginPhone').value;
             const password = document.getElementById('loginPassword').value;
-            const loginError = document.getElementById('loginError');
-
-            if (!phone || !password) {
-                loginError.textContent = "Please fill in all fields.";
-                return;
-            }
-
-            try {
-                const userRef = db.collection('users').doc(phone);
-                const userDoc = await userRef.get();
-                if (!userDoc.exists) {
-                    loginError.textContent = "User not found.";
-                    return;
-                }
-
-                const userData = userDoc.data();
-                const hashedPassword = await hashPassword(password);
-                if (userData.password !== hashedPassword) {
-                    loginError.textContent = "Invalid password.";
-                    return;
-                }
-
-                // Simulate login success
-                tempUser = userData;
-                redirectToLiveTab(userData);
+            const user = users.find(u => u.phone === phone && u.password === password);
+            if (user) {
                 alert("Login successful! Redirecting to Live Tab...");
-            } catch (error) {
-                loginError.textContent = "An error occurred. Please try again.";
+                redirectToLiveTab(user);
+            } else {
+                alert("Invalid phone number or password.");
             }
         }
-
         // Redirect to Live Tab
         function redirectToLiveTab(user) {
+            // Store logged-in user data
+            sessionStorage.setItem('loggedInUser', JSON.stringify(user));
+            // Hide all forms and show Live Tab
             document.getElementById('landingPage').classList.add('hidden');
             document.getElementById('loginForm').classList.add('hidden');
             document.getElementById('liveTab').classList.remove('hidden');
-            document.getElementById('profileName').textContent = `Name: ${user.name}`;
-            document.getElementById('profilePhone').textContent = `Phone: ${user.phone}`;
         }
-
         // Show Profile Page
         function showProfile() {
+            const loggedInUser = JSON.parse(sessionStorage.getItem('loggedInUser'));
+            if (!loggedInUser) {
+                alert("You must be logged in to view your profile.");
+                return;
+            }
             document.getElementById('liveTab').classList.add('hidden');
             document.getElementById('profilePage').classList.remove('hidden');
-        }
-
-        // Password Hashing (Using SHA-256)
-        async function hashPassword(password) {
-            const encoder = new TextEncoder();
-            const data = encoder.encode(password);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            return hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
-        }
-
-        // Send Verification Code via Twilio
-        async function sendVerificationCode(phone, code) {
-            const response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/Messages.json`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': 'Basic ' + btoa(`${twilioAccountSid}:${twilioAuthToken}`),
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                body: new URLSearchParams({
-                    'From': twilioPhoneNumber,
-                    'To': phone,
-                    'Body': `Your verification code is: ${code}`
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error("Failed to send SMS.");
-            }
+            // Display user data
+            document.getElementById('profileName').textContent = `Name: ${loggedInUser.name}`;
+            document.getElementById('profilePhone').textContent = `Phone: ${loggedInUser.phone}`;
         }
     </script>
 </body>
