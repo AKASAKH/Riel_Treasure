@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Debugging Firebase App</title>
+    <title>Firebase Phone Auth Test</title>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -18,21 +17,8 @@
         .container {
             margin-top: 50px;
         }
-        h1 {
-            color: #333;
-        }
-        .form-container {
-            margin: 20px auto;
-            padding: 20px;
-            width: 300px;
-            background: #fff;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-        input[type="text"],
-        input[type="password"],
         input[type="tel"] {
-            width: 100%;
+            width: 200px;
             padding: 10px;
             margin: 10px 0;
             border: 1px solid #ccc;
@@ -50,9 +36,6 @@
         button:hover {
             background-color: #005f99;
         }
-        .hidden {
-            display: none;
-        }
         .error {
             color: red;
             font-size: 14px;
@@ -60,7 +43,20 @@
     </style>
 </head>
 <body>
-    <!-- Firebase Configuration -->
+    <div class="container">
+        <h1>Phone Authentication Test</h1>
+        <input type="tel" id="phoneNumber" placeholder="Enter phone number (+1234567890)" required />
+        <button onclick="sendVerificationCode()">Send Code</button>
+        <p class="error" id="authError"></p>
+
+        <div id="verificationSection" style="display: none;">
+            <h2>Enter Verification Code</h2>
+            <input type="text" id="verificationCode" placeholder="Verification Code" required />
+            <button onclick="verifyCode()">Verify</button>
+            <p class="error" id="codeError"></p>
+        </div>
+    </div>
+
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyBU-wYAPyHUYYWG386xmydeOwLgXLMYhmk",
@@ -73,41 +69,59 @@
        // Initialize Firebase
         const app = firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
-        const db = firebase.firestore();
 
         console.log("Firebase initialized:", app);
 
-        // Test Firestore connection
-        db.collection("test").doc("testDoc").set({ message: "Hello, Firebase!" })
-            .then(() => console.log("Firestore test successful"))
-            .catch(error => console.error("Firestore error:", error));
-    </script>
+        let confirmationResult;
 
-    <!-- Landing Page -->
-    <div class="container" id="landingPage">
-        <h1>Welcome to My Telegram Mini App!</h1>
-        <button onclick="testPhoneAuth()">Test Phone Auth</button>
-        <p class="error" id="debugError"></p>
-    </div>
-    <script>
-        async function testPhoneAuth() {
-            const phoneNumber = "+1234567890"; // Replace with a valid phone number
-            const recaptchaVerifier = new firebase.auth.RecaptchaVerifier('landingPage', {
-                size: 'invisible',
-                callback: response => {
-                    console.log("reCAPTCHA solved:", response);
-                }
-            });
+        // Send Verification Code
+        async function sendVerificationCode() {
+            const phoneNumber = document.getElementById('phoneNumber').value;
+            const authError = document.getElementById('authError');
+
+            if (!phoneNumber) {
+                authError.textContent = "Please enter a valid phone number.";
+                return;
+            }
 
             try {
-                const confirmationResult = await firebase.auth().signInWithPhoneNumber(phoneNumber, recaptchaVerifier);
-                console.log("Verification code sent:", confirmationResult);
-                alert("Enter the verification code sent to your phone.");
+                const recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+                    size: 'invisible',
+                    callback: response => {
+                        console.log("reCAPTCHA solved:", response);
+                    }
+                });
+
+                confirmationResult = await auth.signInWithPhoneNumber(phoneNumber, recaptchaVerifier);
+                document.getElementById('verificationSection').style.display = 'block';
+                alert(`A verification code has been sent to ${phoneNumber}.`);
             } catch (error) {
-                console.error("Phone authentication failed:", error);
-                document.getElementById('debugError').textContent = error.message;
+                console.error("Error sending verification code:", error);
+                authError.textContent = error.message;
+            }
+        }
+
+        // Verify Code
+        async function verifyCode() {
+            const code = document.getElementById('verificationCode').value;
+            const codeError = document.getElementById('codeError');
+
+            if (!code) {
+                codeError.textContent = "Please enter the verification code.";
+                return;
+            }
+
+            try {
+                await confirmationResult.confirm(code);
+                alert("Phone authentication successful!");
+            } catch (error) {
+                console.error("Error verifying code:", error);
+                codeError.textContent = error.message;
             }
         }
     </script>
+
+    <!-- Invisible reCAPTCHA container -->
+    <div id="recaptcha-container"></div>
 </body>
 </html>
