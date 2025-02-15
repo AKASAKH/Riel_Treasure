@@ -54,9 +54,6 @@
             display: none;
             margin-top: 50px;
         }
-        .profile-page.active {
-            display: block;
-        }
         .profile-info {
             font-size: 16px;
             color: #333;
@@ -70,9 +67,6 @@
             border-radius: 8px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
-        .admin-dashboard.active {
-            display: block;
-        }
         table {
             width: 100%;
             border-collapse: collapse;
@@ -85,6 +79,39 @@
         }
         table th {
             background-color: #f4f4f9;
+        }
+        /* Bottom Navigation Tabs */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background-color: #fff;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 10px 0;
+            box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .bottom-nav button {
+            background: none;
+            border: none;
+            font-size: 14px;
+            color: #0088cc;
+            cursor: pointer;
+        }
+        .bottom-nav button.active {
+            color: #005f99;
+            font-weight: bold;
+        }
+        /* Live Tab Content */
+        .live-tab-content {
+            margin-bottom: 80px; /* Space for bottom navigation */
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
         }
     </style>
 </head>
@@ -122,17 +149,24 @@
     </div>
 
     <!-- Live Tab -->
-    <div class="container hidden" id="liveTab">
-        <h1>Live Tab</h1>
-        <p>Welcome to the Live Tab!</p>
-        <button onclick="showProfile()">View Profile</button>
-    </div>
-
-    <!-- Profile Page -->
-    <div class="profile-page hidden" id="profilePage">
-        <h2>Profile</h2>
-        <div class="profile-info" id="profileName"></div>
-        <div class="profile-info" id="profilePhone"></div>
+    <div class="container hidden live-tab-content" id="liveTab">
+        <div class="tab-content active" id="liveContent">
+            <h1>Live Tab</h1>
+            <p>This is the Live section.</p>
+        </div>
+        <div class="tab-content" id="communityContent">
+            <h1>Community Tab</h1>
+            <p>This is the Community section.</p>
+        </div>
+        <div class="tab-content" id="exploreContent">
+            <h1>Explore Tab</h1>
+            <p>This is the Explore section.</p>
+        </div>
+        <div class="tab-content" id="profileContent">
+            <h2>Profile</h2>
+            <div class="profile-info" id="profileName"></div>
+            <div class="profile-info" id="profilePhone"></div>
+        </div>
     </div>
 
     <!-- Admin Dashboard -->
@@ -150,6 +184,14 @@
                 <!-- User rows will be dynamically added here -->
             </tbody>
         </table>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+        <button onclick="switchTab('live')" class="active">Live</button>
+        <button onclick="switchTab('community')">Community</button>
+        <button onclick="switchTab('explore')">Explore</button>
+        <button onclick="switchTab('profile')">Profile</button>
     </div>
 
     <script>
@@ -263,6 +305,9 @@
             document.getElementById('loginForm').classList.add('hidden');
             document.getElementById('adminDashboard').classList.add('hidden'); // Ensure Admin Dashboard is hidden
             document.getElementById('liveTab').classList.remove('hidden');
+
+            // Reset to Live tab
+            switchTab('live');
         }
 
         // Redirect to Admin Dashboard
@@ -317,22 +362,32 @@
             alert("User deleted successfully!");
         }
 
-        // Show Profile Page
-        function showProfile() {
-            const loggedInUser = JSON.parse(sessionStorage.getItem('loggedInUser'));
-            if (!loggedInUser) {
-                alert("You must be logged in to view your profile.");
-                return;
+        // Switch Tabs in Live Tab
+        function switchTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show the selected tab content
+            document.getElementById(`${tabName}Content`).classList.add('active');
+
+            // Update active state of bottom navigation buttons
+            document.querySelectorAll('.bottom-nav button').forEach(button => {
+                button.classList.remove('active');
+            });
+            document.querySelector(`.bottom-nav button[onclick="switchTab('${tabName}')"]`).classList.add('active');
+
+            // Handle Profile tab logic
+            if (tabName === 'profile') {
+                const loggedInUser = JSON.parse(sessionStorage.getItem('loggedInUser'));
+                if (loggedInUser.phone === adminUser.phone) {
+                    redirectToAdminDashboard(loggedInUser);
+                } else {
+                    document.getElementById('profileName').textContent = `Name: ${loggedInUser.name}`;
+                    document.getElementById('profilePhone').textContent = `Phone: ${loggedInUser.phone}`;
+                }
             }
-
-            console.log("Showing Profile Page..."); // Debugging log
-
-            document.getElementById('liveTab').classList.add('hidden');
-            document.getElementById('profilePage').classList.remove('hidden');
-
-            // Display user data
-            document.getElementById('profileName').textContent = `Name: ${loggedInUser.name}`;
-            document.getElementById('profilePhone').textContent = `Phone: ${loggedInUser.phone}`;
         }
     </script>
 </body>
