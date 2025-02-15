@@ -61,6 +61,31 @@
             font-size: 16px;
             color: #333;
         }
+        .admin-dashboard {
+            display: none;
+            margin-top: 50px;
+            text-align: left;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .admin-dashboard.active {
+            display: block;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table th, table td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: left;
+        }
+        table th {
+            background-color: #f4f4f9;
+        }
     </style>
 </head>
 <body>
@@ -103,6 +128,22 @@
         <h2>Profile</h2>
         <div class="profile-info" id="profileName"></div>
         <div class="profile-info" id="profilePhone"></div>
+    </div>
+    <!-- Admin Dashboard -->
+    <div class="admin-dashboard hidden" id="adminDashboard">
+        <h2>Admin Dashboard</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Phone Number</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="userTable">
+                <!-- User rows will be dynamically added here -->
+            </tbody>
+        </table>
     </div>
     <script>
         // Simulated database (in-memory storage)
@@ -178,8 +219,8 @@
 
             // Check for hardcoded admin user
             if (phone === adminUser.phone && password === adminUser.password) {
-                alert("Admin login successful! Redirecting to Live Tab...");
-                redirectToLiveTab(adminUser);
+                alert("Admin login successful! Redirecting to Admin Dashboard...");
+                redirectToAdminDashboard(adminUser);
                 return;
             }
 
@@ -201,6 +242,51 @@
             document.getElementById('landingPage').classList.add('hidden');
             document.getElementById('loginForm').classList.add('hidden');
             document.getElementById('liveTab').classList.remove('hidden');
+        }
+
+        // Redirect to Admin Dashboard
+        function redirectToAdminDashboard(user) {
+            // Store logged-in user data
+            sessionStorage.setItem('loggedInUser', JSON.stringify(user));
+            // Hide all forms and show Admin Dashboard
+            document.getElementById('landingPage').classList.add('hidden');
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('adminDashboard').classList.remove('hidden');
+            renderUserTable();
+        }
+
+        // Render User Table in Admin Dashboard
+        function renderUserTable() {
+            const userTable = document.getElementById('userTable');
+            userTable.innerHTML = ''; // Clear existing rows
+
+            users.forEach((user, index) => {
+                const row = document.createElement('tr');
+
+                const nameCell = document.createElement('td');
+                nameCell.textContent = user.name;
+                row.appendChild(nameCell);
+
+                const phoneCell = document.createElement('td');
+                phoneCell.textContent = user.phone;
+                row.appendChild(phoneCell);
+
+                const actionsCell = document.createElement('td');
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Delete';
+                deleteButton.onclick = () => deleteUser(index);
+                actionsCell.appendChild(deleteButton);
+                row.appendChild(actionsCell);
+
+                userTable.appendChild(row);
+            });
+        }
+
+        // Delete User from Admin Dashboard
+        function deleteUser(index) {
+            users.splice(index, 1); // Remove user from the array
+            renderUserTable(); // Re-render the table
+            alert("User deleted successfully!");
         }
 
         // Show Profile Page
