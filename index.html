@@ -154,7 +154,12 @@
         window.onload = function () {
             const loggedInUser = sessionStorage.getItem('loggedInUser');
             if (loggedInUser) {
-                redirectToLiveTab(JSON.parse(loggedInUser));
+                const user = JSON.parse(loggedInUser);
+                if (user.phone === adminUser.phone) {
+                    redirectToAdminDashboard(user);
+                } else {
+                    redirectToLiveTab(user);
+                }
             } else {
                 document.getElementById('landingPage').classList.remove('hidden');
             }
@@ -219,6 +224,7 @@
 
             // Check for hardcoded admin user
             if (phone === adminUser.phone && password === adminUser.password) {
+                console.log("Admin login successful!"); // Debugging log
                 alert("Admin login successful! Redirecting to Admin Dashboard...");
                 redirectToAdminDashboard(adminUser);
                 return;
@@ -236,6 +242,7 @@
 
         // Redirect to Live Tab
         function redirectToLiveTab(user) {
+            console.log("Redirecting to Live Tab..."); // Debugging log
             // Store logged-in user data
             sessionStorage.setItem('loggedInUser', JSON.stringify(user));
             // Hide all forms and show Live Tab
@@ -246,17 +253,24 @@
 
         // Redirect to Admin Dashboard
         function redirectToAdminDashboard(user) {
+            console.log("Redirecting to Admin Dashboard..."); // Debugging log
+
             // Store logged-in user data
             sessionStorage.setItem('loggedInUser', JSON.stringify(user));
+
             // Hide all forms and show Admin Dashboard
             document.getElementById('landingPage').classList.add('hidden');
             document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('liveTab').classList.add('hidden');
             document.getElementById('adminDashboard').classList.remove('hidden');
+
+            // Render user table
             renderUserTable();
         }
 
         // Render User Table in Admin Dashboard
         function renderUserTable() {
+            console.log("Rendering user table..."); // Debugging log
             const userTable = document.getElementById('userTable');
             userTable.innerHTML = ''; // Clear existing rows
 
