@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telegram Mini App - Firebase Backend</title>
+    <title>Debugging Firebase App</title>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
@@ -53,17 +53,6 @@
         .hidden {
             display: none;
         }
-        .profile-page {
-            display: none;
-            margin-top: 50px;
-        }
-        .profile-page.active {
-            display: block;
-        }
-        .profile-info {
-            font-size: 16px;
-            color: #333;
-        }
         .error {
             color: red;
             font-size: 14px;
@@ -81,236 +70,43 @@
             messagingSenderId: "9857803226",
             appId: "123456789"
         };
+       // Initialize Firebase
         const app = firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        // Firestore Security Rules Example
-        /*
-        rules_version = '2';
-        service cloud.firestore {
-          match /databases/{database}/documents {
-            match /users/{userId} {
-              allow read, write: if request.auth != null && request.auth.uid == userId;
-            }
-          }
-        }
-        */
+        console.log("Firebase initialized:", app);
+
+        // Test Firestore connection
+        db.collection("test").doc("testDoc").set({ message: "Hello, Firebase!" })
+            .then(() => console.log("Firestore test successful"))
+            .catch(error => console.error("Firestore error:", error));
     </script>
 
     <!-- Landing Page -->
-    <div class="container hidden" id="landingPage">
+    <div class="container" id="landingPage">
         <h1>Welcome to My Telegram Mini App!</h1>
-        <button onclick="showSignUp()">Sign Up</button>
-        <button onclick="showLogin()">Login</button>
-    </div>
-    <!-- Sign-Up Form -->
-    <div class="form-container hidden" id="signUpForm">
-        <h2>Sign Up</h2>
-        <input type="text" id="signupName" placeholder="Name" required>
-        <input type="tel" id="signupPhone" placeholder="Phone Number" required>
-        <input type="password" id="signupPassword" placeholder="Password" required>
-        <button onclick="nextTo2FA()">Next</button>
-        <p class="error" id="signupError"></p>
-    </div>
-    <!-- 2FA Verification -->
-    <div class="form-container hidden" id="twoFAForm">
-        <h2>2FA Verification</h2>
-        <p>Enter the code sent to your phone number:</p>
-        <input type="text" id="verificationCode" placeholder="Verification Code" required>
-        <button onclick="completeSignUp()">Verify</button>
-        <p class="error" id="verificationError"></p>
-    </div>
-    <!-- Login Form -->
-    <div class="form-container hidden" id="loginForm">
-        <h2>Login</h2>
-        <input type="tel" id="loginPhone" placeholder="Phone Number" required>
-        <input type="password" id="loginPassword" placeholder="Password" required>
-        <button onclick="loginUser()">Login</button>
-        <p class="error" id="loginError"></p>
-    </div>
-    <!-- Live Tab -->
-    <div class="container hidden" id="liveTab">
-        <h1>Live Tab</h1>
-        <p>Welcome to the Live Tab!</p>
-        <button onclick="showProfile()">View Profile</button>
-    </div>
-    <!-- Profile Page -->
-    <div class="profile-page hidden" id="profilePage">
-        <h2>Profile</h2>
-        <div class="profile-info" id="profileName"></div>
-        <div class="profile-info" id="profilePhone"></div>
+        <button onclick="testPhoneAuth()">Test Phone Auth</button>
+        <p class="error" id="debugError"></p>
     </div>
     <script>
-        let tempUser = null;
-
-        // Check if user is already logged in
-        window.onload = function () {
-            auth.onAuthStateChanged(user => {
-                if (user) {
-                    fetchUserData(user.phoneNumber).then(userData => {
-                        redirectToLiveTab(userData);
-                    });
-                } else {
-                    document.getElementById('landingPage').classList.remove('hidden');
+        async function testPhoneAuth() {
+            const phoneNumber = "+1234567890"; // Replace with a valid phone number
+            const recaptchaVerifier = new firebase.auth.RecaptchaVerifier('landingPage', {
+                size: 'invisible',
+                callback: response => {
+                    console.log("reCAPTCHA solved:", response);
                 }
             });
-        };
-
-        // Show Sign-Up Form
-        function showSignUp() {
-            document.getElementById('landingPage').classList.add('hidden');
-            document.getElementById('signUpForm').classList.remove('hidden');
-        }
-
-        // Show Login Form
-        function showLogin() {
-            document.getElementById('landingPage').classList.add('hidden');
-            document.getElementById('loginForm').classList.remove('hidden');
-        }
-
-        // Next to 2FA Verification
-        async function nextTo2FA() {
-            const name = document.getElementById('signupName').value;
-            const phone = document.getElementById('signupPhone').value;
-            const password = document.getElementById('signupPassword').value;
-            const signupError = document.getElementById('signupError');
-
-            if (!name || !phone || !password) {
-                signupError.textContent = "Please fill in all fields.";
-                return;
-            }
-
-            // Hash the password
-            const hashedPassword = await hashPassword(password);
-
-            // Store temporary data for 2FA
-            tempUser = { name, phone, password: hashedPassword };
-            sessionStorage.setItem('tempUser', JSON.stringify(tempUser));
-
-            // Send verification code via Firebase Phone Auth
-            try {
-                const recaptchaVerifier = new firebase.auth.RecaptchaVerifier('twoFAForm', {
-                    size: 'invisible',
-                    callback: response => {
-                        console.log("reCAPTCHA solved:", response);
-                    }
-                });
-
-                const confirmationResult = await auth.signInWithPhoneNumber(phone, recaptchaVerifier);
-                sessionStorage.setItem('confirmationResult', JSON.stringify(confirmationResult));
-                alert(`A verification code has been sent to ${phone}.`);
-                document.getElementById('signUpForm').classList.add('hidden');
-                document.getElementById('twoFAForm').classList.remove('hidden');
-            } catch (error) {
-                signupError.textContent = "Failed to send verification code. Please try again.";
-            }
-        }
-
-        // Complete Sign-Up
-        async function completeSignUp() {
-            const code = document.getElementById('verificationCode').value;
-            const verificationError = document.getElementById('verificationError');
-
-            if (!code) {
-                verificationError.textContent = "Please enter the verification code.";
-                return;
-            }
-
-            const confirmationResult = JSON.parse(sessionStorage.getItem('confirmationResult'));
-            if (!confirmationResult) {
-                verificationError.textContent = "Verification session expired. Please try again.";
-                return;
-            }
 
             try {
-                await confirmationResult.confirm(code);
-
-                // Save user data to Firestore
-                const userRef = db.collection('users').doc(tempUser.phone);
-                await userRef.set({
-                    name: tempUser.name,
-                    phone: tempUser.phone,
-                    password: tempUser.password
-                });
-
-                // Clear temporary data
-                sessionStorage.removeItem('tempUser');
-                sessionStorage.removeItem('confirmationResult');
-
-                // Redirect to Live Tab
-                document.getElementById('twoFAForm').classList.add('hidden');
-                redirectToLiveTab(tempUser);
-                alert("Sign up successful! Redirecting to Live Tab...");
+                const confirmationResult = await firebase.auth().signInWithPhoneNumber(phoneNumber, recaptchaVerifier);
+                console.log("Verification code sent:", confirmationResult);
+                alert("Enter the verification code sent to your phone.");
             } catch (error) {
-                verificationError.textContent = "Invalid verification code. Please try again.";
+                console.error("Phone authentication failed:", error);
+                document.getElementById('debugError').textContent = error.message;
             }
-        }
-
-        // Login User
-        async function loginUser() {
-            const phone = document.getElementById('loginPhone').value;
-            const password = document.getElementById('loginPassword').value;
-            const loginError = document.getElementById('loginError');
-
-            if (!phone || !password) {
-                loginError.textContent = "Please fill in all fields.";
-                return;
-            }
-
-            try {
-                const userDoc = await db.collection('users').doc(phone).get();
-                if (!userDoc.exists) {
-                    loginError.textContent = "User not found.";
-                    return;
-                }
-
-                const userData = userDoc.data();
-                const hashedPassword = await hashPassword(password);
-                if (userData.password !== hashedPassword) {
-                    loginError.textContent = "Invalid password.";
-                    return;
-                }
-
-                // Simulate login success
-                redirectToLiveTab(userData);
-                alert("Login successful! Redirecting to Live Tab...");
-            } catch (error) {
-                loginError.textContent = "An error occurred. Please try again.";
-            }
-        }
-
-        // Redirect to Live Tab
-        function redirectToLiveTab(user) {
-            document.getElementById('landingPage').classList.add('hidden');
-            document.getElementById('loginForm').classList.add('hidden');
-            document.getElementById('liveTab').classList.remove('hidden');
-            document.getElementById('profileName').textContent = `Name: ${user.name}`;
-            document.getElementById('profilePhone').textContent = `Phone: ${user.phone}`;
-        }
-
-        // Show Profile Page
-        function showProfile() {
-            document.getElementById('liveTab').classList.add('hidden');
-            document.getElementById('profilePage').classList.remove('hidden');
-        }
-
-        // Password Hashing (Using SHA-256)
-        async function hashPassword(password) {
-            const encoder = new TextEncoder();
-            const data = encoder.encode(password);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            return hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
-        }
-
-        // Fetch User Data from Firestore
-        async function fetchUserData(phone) {
-            const userDoc = await db.collection('users').doc(phone).get();
-            if (userDoc.exists) {
-                return userDoc.data();
-            }
-            throw new Error("User not found.");
         }
     </script>
 </body>
