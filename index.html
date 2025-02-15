@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telegram Mini App - Firebase Backend</title>
+    <title>Telegram Mini App - Landing Page</title>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
@@ -85,17 +85,10 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        // Firestore Security Rules Example
-        /*
-        rules_version = '2';
-        service cloud.firestore {
-          match /databases/{database}/documents {
-            match /users/{userId} {
-              allow read, write: if request.auth != null && request.auth.uid == userId;
-            }
-          }
-        }
-        */
+        // Twilio API (Replace with your Twilio credentials)
+        const twilioAccountSid = "YOUR_TWILIO_SID";
+        const twilioAuthToken = "YOUR_TWILIO_AUTH_TOKEN";
+        const twilioPhoneNumber = "+1234567890"; // Your Twilio phone number
     </script>
 
     <!-- Landing Page -->
@@ -148,9 +141,7 @@
         window.onload = function () {
             auth.onAuthStateChanged(user => {
                 if (user) {
-                    fetchUserData(user.phoneNumber).then(userData => {
-                        redirectToLiveTab(userData);
-                    });
+                    redirectToLiveTab(user);
                 } else {
                     document.getElementById('landingPage').classList.remove('hidden');
                 }
@@ -188,17 +179,11 @@
             tempUser = { name, phone, password: hashedPassword };
             sessionStorage.setItem('tempUser', JSON.stringify(tempUser));
 
-            // Send verification code via Firebase Phone Auth
+            // Send verification code via Twilio
             try {
-                const recaptchaVerifier = new firebase.auth.RecaptchaVerifier('twoFAForm', {
-                    size: 'invisible',
-                    callback: response => {
-                        console.log("reCAPTCHA solved:", response);
-                    }
-                });
-
-                const confirmationResult = await auth.signInWithPhoneNumber(phone, recaptchaVerifier);
-                sessionStorage.setItem('confirmationResult', JSON.stringify(confirmationResult));
+                const verificationCode = Math.floor(1000 + Math.random() * 9000); // Generate random 4-digit code
+                sessionStorage.setItem('verificationCode', verificationCode.toString());
+                await sendVerificationCode(phone, verificationCode);
                 alert(`A verification code has been sent to ${phone}.`);
                 document.getElementById('signUpForm').classList.add('hidden');
                 document.getElementById('twoFAForm').classList.remove('hidden');
@@ -217,16 +202,14 @@
                 return;
             }
 
-            const confirmationResult = JSON.parse(sessionStorage.getItem('confirmationResult'));
-            if (!confirmationResult) {
-                verificationError.textContent = "Verification session expired. Please try again.";
+            const storedCode = sessionStorage.getItem('verificationCode');
+            if (code !== storedCode) {
+                verificationError.textContent = "Invalid verification code.";
                 return;
             }
 
+            // Save user data to Firestore
             try {
-                await confirmationResult.confirm(code);
-
-                // Save user data to Firestore
                 const userRef = db.collection('users').doc(tempUser.phone);
                 await userRef.set({
                     name: tempUser.name,
@@ -236,14 +219,14 @@
 
                 // Clear temporary data
                 sessionStorage.removeItem('tempUser');
-                sessionStorage.removeItem('confirmationResult');
+                sessionStorage.removeItem('verificationCode');
 
                 // Redirect to Live Tab
                 document.getElementById('twoFAForm').classList.add('hidden');
                 redirectToLiveTab(tempUser);
                 alert("Sign up successful! Redirecting to Live Tab...");
             } catch (error) {
-                verificationError.textContent = "Invalid verification code. Please try again.";
+                verificationError.textContent = "Failed to save user data. Please try again.";
             }
         }
 
@@ -259,7 +242,8 @@
             }
 
             try {
-                const userDoc = await db.collection('users').doc(phone).get();
+                const userRef = db.collection('users').doc(phone);
+                const userDoc = await userRef.get();
                 if (!userDoc.exists) {
                     loginError.textContent = "User not found.";
                     return;
@@ -273,6 +257,7 @@
                 }
 
                 // Simulate login success
+                tempUser = userData;
                 redirectToLiveTab(userData);
                 alert("Login successful! Redirecting to Live Tab...");
             } catch (error) {
@@ -304,13 +289,24 @@
             return hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
         }
 
-        // Fetch User Data from Firestore
-        async function fetchUserData(phone) {
-            const userDoc = await db.collection('users').doc(phone).get();
-            if (userDoc.exists) {
-                return userDoc.data();
+        // Send Verification Code via Twilio
+        async function sendVerificationCode(phone, code) {
+            const response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/Messages.json`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Basic ' + btoa(`${twilioAccountSid}:${twilioAuthToken}`),
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: new URLSearchParams({
+                    'From': twilioPhoneNumber,
+                    'To': phone,
+                    'Body': `Your verification code is: ${code}`
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to send SMS.");
             }
-            throw new Error("User not found.");
         }
     </script>
 </body>
