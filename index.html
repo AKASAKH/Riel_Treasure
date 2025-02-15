@@ -3,36 +3,319 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard Test</title>
+    <title>Telegram Mini App - Landing Page</title>
     <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+        .container {
+            margin-top: 50px;
+        }
+        h1 {
+            color: #333;
+        }
+        .form-container {
+            margin: 20px auto;
+            padding: 20px;
+            width: 300px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        input[type="text"],
+        input[type="password"],
+        input[type="tel"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            color: #fff;
+            background-color: #0088cc;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #005f99;
+        }
         .hidden {
             display: none;
         }
-        .admin-dashboard {
+        .profile-page {
+            display: none;
             margin-top: 50px;
+        }
+        .profile-page.active {
+            display: block;
+        }
+        .profile-info {
+            font-size: 16px;
+            color: #333;
+        }
+        .admin-dashboard {
+            display: none;
+            margin-top: 50px;
+            text-align: left;
             padding: 20px;
             background: #fff;
             border-radius: 8px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
+        .admin-dashboard.active {
+            display: block;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table th, table td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: left;
+        }
+        table th {
+            background-color: #f4f4f9;
+        }
     </style>
 </head>
 <body>
+    <!-- Landing Page -->
+    <div class="container hidden" id="landingPage">
+        <h1>Welcome to My Telegram Mini App!</h1>
+        <button onclick="showSignUp()">Sign Up</button>
+        <button onclick="showLogin()">Login</button>
+    </div>
+    <!-- Sign-Up Form -->
+    <div class="form-container hidden" id="signUpForm">
+        <h2>Sign Up</h2>
+        <input type="text" id="signupName" placeholder="Name" required>
+        <input type="tel" id="signupPhone" placeholder="Phone Number" required>
+        <input type="password" id="signupPassword" placeholder="Password" required>
+        <button onclick="nextTo2FA()">Next</button>
+    </div>
+    <!-- 2FA Verification -->
+    <div class="form-container hidden" id="twoFAForm">
+        <h2>2FA Verification</h2>
+        <p>Enter the code sent to your phone number:</p>
+        <input type="text" id="verificationCode" placeholder="Verification Code" required>
+        <button onclick="completeSignUp()">Verify</button>
+    </div>
+    <!-- Login Form -->
+    <div class="form-container hidden" id="loginForm">
+        <h2>Login</h2>
+        <input type="tel" id="loginPhone" placeholder="Phone Number" required>
+        <input type="password" id="loginPassword" placeholder="Password" required>
+        <button onclick="loginUser()">Login</button>
+    </div>
+    <!-- Live Tab -->
+    <div class="container hidden" id="liveTab">
+        <h1>Live Tab</h1>
+        <p>Welcome to the Live Tab!</p>
+        <button onclick="showProfile()">View Profile</button>
+    </div>
+    <!-- Profile Page -->
+    <div class="profile-page hidden" id="profilePage">
+        <h2>Profile</h2>
+        <div class="profile-info" id="profileName"></div>
+        <div class="profile-info" id="profilePhone"></div>
+    </div>
     <!-- Admin Dashboard -->
     <div class="admin-dashboard hidden" id="adminDashboard">
         <h2>Admin Dashboard</h2>
-        <p>Welcome to the Admin Dashboard!</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Phone Number</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="userTable">
+                <!-- User rows will be dynamically added here -->
+            </tbody>
+        </table>
     </div>
-
     <script>
-        // Simulate admin login
-        function simulateAdminLogin() {
-            console.log("Simulating admin login...");
-            document.getElementById('adminDashboard').classList.remove('hidden');
+        // Simulated database (in-memory storage)
+        const users = [];
+        const adminUser = { name: "Admin", phone: "093474706", password: "admin" }; // Updated admin user
+
+        // Check if user is already logged in
+        window.onload = function () {
+            const loggedInUser = sessionStorage.getItem('loggedInUser');
+            if (loggedInUser) {
+                const user = JSON.parse(loggedInUser);
+                if (user.phone === adminUser.phone) {
+                    redirectToAdminDashboard(user);
+                } else {
+                    redirectToLiveTab(user);
+                }
+            } else {
+                document.getElementById('landingPage').classList.remove('hidden');
+            }
+        };
+
+        // Show Sign-Up Form
+        function showSignUp() {
+            document.getElementById('landingPage').classList.add('hidden');
+            document.getElementById('signUpForm').classList.remove('hidden');
         }
 
-        // Test the function
-        simulateAdminLogin();
+        // Show Login Form
+        function showLogin() {
+            document.getElementById('landingPage').classList.add('hidden');
+            document.getElementById('loginForm').classList.remove('hidden');
+        }
+
+        // Next to 2FA Verification
+        function nextTo2FA() {
+            const name = document.getElementById('signupName').value;
+            const phone = document.getElementById('signupPhone').value;
+            const password = document.getElementById('signupPassword').value;
+            if (!name || !phone || !password) {
+                alert("Please fill in all fields.");
+                return;
+            }
+            // Store temporary data for 2FA
+            sessionStorage.setItem('tempUser', JSON.stringify({ name, phone, password }));
+            // Simulate sending a verification code
+            alert(`A verification code has been sent to ${phone}.`);
+            document.getElementById('signUpForm').classList.add('hidden');
+            document.getElementById('twoFAForm').classList.remove('hidden');
+        }
+
+        // Complete Sign-Up
+        function completeSignUp() {
+            const code = document.getElementById('verificationCode').value;
+            if (!code) {
+                alert("Please enter the verification code.");
+                return;
+            }
+            // Simulate verifying the code
+            if (code === "1234") { // Assume the code is "1234"
+                const tempUser = JSON.parse(sessionStorage.getItem('tempUser'));
+                // Save user data
+                users.push(tempUser);
+                // Clear temporary data
+                sessionStorage.removeItem('tempUser');
+                // Hide 2FA form and redirect to Live Tab
+                document.getElementById('twoFAForm').classList.add('hidden');
+                redirectToLiveTab(tempUser);
+                alert("Sign up successful! Redirecting to Live Tab...");
+            } else {
+                alert("Invalid verification code.");
+            }
+        }
+
+        // Login User
+        function loginUser() {
+            const phone = document.getElementById('loginPhone').value;
+            const password = document.getElementById('loginPassword').value;
+
+            // Check for hardcoded admin user
+            if (phone === adminUser.phone && password === adminUser.password) {
+                console.log("Admin login successful!"); // Debugging log
+                alert("Admin login successful! Redirecting to Admin Dashboard...");
+                redirectToAdminDashboard(adminUser);
+                return;
+            }
+
+            // Check for regular users
+            const user = users.find(u => u.phone === phone && u.password === password);
+            if (user) {
+                alert("Login successful! Redirecting to Live Tab...");
+                redirectToLiveTab(user);
+            } else {
+                alert("Invalid phone number or password.");
+            }
+        }
+
+        // Redirect to Live Tab
+        function redirectToLiveTab(user) {
+            console.log("Redirecting to Live Tab..."); // Debugging log
+            // Store logged-in user data
+            sessionStorage.setItem('loggedInUser', JSON.stringify(user));
+            // Hide all forms and show Live Tab
+            document.getElementById('landingPage').classList.add('hidden');
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('liveTab').classList.remove('hidden');
+        }
+
+        // Redirect to Admin Dashboard
+        function redirectToAdminDashboard(user) {
+            console.log("Redirecting to Admin Dashboard..."); // Debugging log
+
+            // Store logged-in user data
+            sessionStorage.setItem('loggedInUser', JSON.stringify(user));
+
+            // Hide all forms and show Admin Dashboard
+            document.getElementById('landingPage').classList.add('hidden');
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('liveTab').classList.add('hidden');
+            document.getElementById('adminDashboard').classList.remove('hidden');
+
+            // Render user table
+            renderUserTable();
+        }
+
+        // Render User Table in Admin Dashboard
+        function renderUserTable() {
+            console.log("Rendering user table..."); // Debugging log
+            const userTable = document.getElementById('userTable');
+            userTable.innerHTML = ''; // Clear existing rows
+
+            users.forEach((user, index) => {
+                const row = document.createElement('tr');
+
+                const nameCell = document.createElement('td');
+                nameCell.textContent = user.name;
+                row.appendChild(nameCell);
+
+                const phoneCell = document.createElement('td');
+                phoneCell.textContent = user.phone;
+                row.appendChild(phoneCell);
+
+                const actionsCell = document.createElement('td');
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Delete';
+                deleteButton.onclick = () => deleteUser(index);
+                actionsCell.appendChild(deleteButton);
+                row.appendChild(actionsCell);
+
+                userTable.appendChild(row);
+            });
+        }
+
+        // Delete User from Admin Dashboard
+        function deleteUser(index) {
+            users.splice(index, 1); // Remove user from the array
+            renderUserTable(); // Re-render the table
+            alert("User deleted successfully!");
+        }
+
+        // Show Profile Page
+        function showProfile() {
+            const loggedInUser = JSON.parse(sessionStorage.getItem('loggedInUser'));
+            if (!loggedInUser) {
+                alert("You must be logged in to view your profile.");
+                return;
+            }
+            document.getElementById('liveTab').classList.add('hidden');
+            document.getElementById('profilePage').classList.remove('hidden');
+            // Display user data
+            document.getElementById('profileName').textContent = `Name: ${loggedInUser.name}`;
+            document.getElementById('profilePhone').textContent = `Phone: ${loggedInUser.phone}`;
+        }
     </script>
 </body>
 </html>
