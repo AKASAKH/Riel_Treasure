@@ -95,6 +95,7 @@
         <button onclick="showSignUp()">Sign Up</button>
         <button onclick="showLogin()">Login</button>
     </div>
+
     <!-- Sign-Up Form -->
     <div class="form-container hidden" id="signUpForm">
         <h2>Sign Up</h2>
@@ -103,6 +104,7 @@
         <input type="password" id="signupPassword" placeholder="Password" required>
         <button onclick="nextTo2FA()">Next</button>
     </div>
+
     <!-- 2FA Verification -->
     <div class="form-container hidden" id="twoFAForm">
         <h2>2FA Verification</h2>
@@ -110,6 +112,7 @@
         <input type="text" id="verificationCode" placeholder="Verification Code" required>
         <button onclick="completeSignUp()">Verify</button>
     </div>
+
     <!-- Login Form -->
     <div class="form-container hidden" id="loginForm">
         <h2>Login</h2>
@@ -117,18 +120,21 @@
         <input type="password" id="loginPassword" placeholder="Password" required>
         <button onclick="loginUser()">Login</button>
     </div>
+
     <!-- Live Tab -->
     <div class="container hidden" id="liveTab">
         <h1>Live Tab</h1>
         <p>Welcome to the Live Tab!</p>
         <button onclick="showProfile()">View Profile</button>
     </div>
+
     <!-- Profile Page -->
     <div class="profile-page hidden" id="profilePage">
         <h2>Profile</h2>
         <div class="profile-info" id="profileName"></div>
         <div class="profile-info" id="profilePhone"></div>
     </div>
+
     <!-- Admin Dashboard -->
     <div class="admin-dashboard hidden" id="adminDashboard">
         <h2>Admin Dashboard</h2>
@@ -145,19 +151,24 @@
             </tbody>
         </table>
     </div>
+
     <script>
         // Simulated database (in-memory storage)
         const users = [];
-        const adminUser = { name: "Admin", phone: "093474706", password: "admin" }; // Updated admin user
+        const adminUser = { name: "Admin", phone: "093474706", password: "admin" }; // Hardcoded admin user
 
         // Check if user is already logged in
         window.onload = function () {
             const loggedInUser = sessionStorage.getItem('loggedInUser');
+            console.log("Logged-in user from sessionStorage:", loggedInUser); // Debugging log
+
             if (loggedInUser) {
                 const user = JSON.parse(loggedInUser);
                 if (user.phone === adminUser.phone) {
+                    console.log("Redirecting to Admin Dashboard..."); // Debugging log
                     redirectToAdminDashboard(user);
                 } else {
+                    console.log("Redirecting to Live Tab..."); // Debugging log
                     redirectToLiveTab(user);
                 }
             } else {
@@ -182,13 +193,14 @@
             const name = document.getElementById('signupName').value;
             const phone = document.getElementById('signupPhone').value;
             const password = document.getElementById('signupPassword').value;
+
             if (!name || !phone || !password) {
                 alert("Please fill in all fields.");
                 return;
             }
+
             // Store temporary data for 2FA
             sessionStorage.setItem('tempUser', JSON.stringify({ name, phone, password }));
-            // Simulate sending a verification code
             alert(`A verification code has been sent to ${phone}.`);
             document.getElementById('signUpForm').classList.add('hidden');
             document.getElementById('twoFAForm').classList.remove('hidden');
@@ -197,18 +209,17 @@
         // Complete Sign-Up
         function completeSignUp() {
             const code = document.getElementById('verificationCode').value;
+
             if (!code) {
                 alert("Please enter the verification code.");
                 return;
             }
+
             // Simulate verifying the code
             if (code === "1234") { // Assume the code is "1234"
                 const tempUser = JSON.parse(sessionStorage.getItem('tempUser'));
-                // Save user data
                 users.push(tempUser);
-                // Clear temporary data
                 sessionStorage.removeItem('tempUser');
-                // Hide 2FA form and redirect to Live Tab
                 document.getElementById('twoFAForm').classList.add('hidden');
                 redirectToLiveTab(tempUser);
                 alert("Sign up successful! Redirecting to Live Tab...");
@@ -242,18 +253,21 @@
 
         // Redirect to Live Tab
         function redirectToLiveTab(user) {
-            console.log("Redirecting to Live Tab..."); // Debugging log
+            console.log("Hiding all sections and showing Live Tab..."); // Debugging log
+
             // Store logged-in user data
             sessionStorage.setItem('loggedInUser', JSON.stringify(user));
+
             // Hide all forms and show Live Tab
             document.getElementById('landingPage').classList.add('hidden');
             document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('adminDashboard').classList.add('hidden'); // Ensure Admin Dashboard is hidden
             document.getElementById('liveTab').classList.remove('hidden');
         }
 
         // Redirect to Admin Dashboard
         function redirectToAdminDashboard(user) {
-            console.log("Redirecting to Admin Dashboard..."); // Debugging log
+            console.log("Hiding all sections and showing Admin Dashboard..."); // Debugging log
 
             // Store logged-in user data
             sessionStorage.setItem('loggedInUser', JSON.stringify(user));
@@ -261,7 +275,7 @@
             // Hide all forms and show Admin Dashboard
             document.getElementById('landingPage').classList.add('hidden');
             document.getElementById('loginForm').classList.add('hidden');
-            document.getElementById('liveTab').classList.add('hidden');
+            document.getElementById('liveTab').classList.add('hidden'); // Ensure Live Tab is hidden
             document.getElementById('adminDashboard').classList.remove('hidden');
 
             // Render user table
@@ -310,8 +324,12 @@
                 alert("You must be logged in to view your profile.");
                 return;
             }
+
+            console.log("Showing Profile Page..."); // Debugging log
+
             document.getElementById('liveTab').classList.add('hidden');
             document.getElementById('profilePage').classList.remove('hidden');
+
             // Display user data
             document.getElementById('profileName').textContent = `Name: ${loggedInUser.name}`;
             document.getElementById('profilePhone').textContent = `Phone: ${loggedInUser.phone}`;
